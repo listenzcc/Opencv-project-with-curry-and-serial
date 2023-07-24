@@ -26,6 +26,7 @@ import matplotlib.pyplot as plt
 from threading import Thread
 from datetime import datetime
 
+from . import LOGGER
 from .toolbox import matplotlib_to_opencv_image
 
 # %%
@@ -47,22 +48,40 @@ class EEGDeviceReader(object):
 
     The sample_rate refers the sampling rate of the device.
     '''
-    channels = 64
-    package_length = 40
+    channels = 64  # number of channels
+    package_length = 40  # number of time points per package
     sample_rate = 1000  # Hz
+    packages_limit = 5000  # number of packages
     package_interval = package_length / sample_rate  # Interval between packages
 
     def __init__(self):
-        self.data_buffer = []
-        self.bgr_list = []
-        self.run_forever()
+        self.running = False
+        LOGGER.debug('EEGDeviceReader initialized with {}'.format(dict(
+            channels=self.channels,
+            package_length=self.package_length,
+            sample_rate=self.sample_rate,
+            packages_limit=self.packages_limit
+        )))
         pass
+
+    def start(self):
+        if not self.running:
+            self.run_forever()
+        else:
+            LOGGER.error('Can not start, since it is already running')
+
+    def stop(self):
+        self.running = False
 
     def _read_data(self):
         """Simulate the EEG device reading,
         it is called by the self.run_forever() method.
         """
+
+        self.data_buffer = []
         self._read_data_idx = 0
+
+        LOGGER.debug('Read data loop starts.')
         while self.running:
             t = time.time()
             incoming = np.zeros((self.channels, self.package_length)) + t
@@ -74,10 +93,14 @@ class EEGDeviceReader(object):
             self.data_buffer.append((self._read_data_idx, t, incoming))
             self._read_data_idx += 1
 
-            if self.get_data_buffer_size() > 5000:
+            if self.get_data_buffer_size() > self.packages_limit:
+                LOGGER.warning(
+                    'Data buffer exceeds {} packages.'.format(self.packages_limit))
                 self.data_buffer.pop(0)
 
             time.sleep(self.package_interval)
+
+        LOGGER.debug('Read data loop stops.')
 
     def add_offset(self, data):
         """Add offset to the channels of the array for display purposes
@@ -93,6 +116,14 @@ class EEGDeviceReader(object):
             d += j
         return data
 
+    def read_bgr(self):
+        if len(self.bgr_list) < 1:
+            return None
+
+        timestamp, bgr = self.bgr_list.pop(0)
+
+        return timestamp, bgr
+
     def _plot_data(self,
                    window_length=2  # Seconds
                    ):
@@ -104,6 +135,9 @@ class EEGDeviceReader(object):
         """
 
         packages = int(window_length / self.package_interval)
+        self.bgr_list = []
+
+        LOGGER.debug('Plot data starts.')
 
         while self.running:
 
@@ -151,6 +185,8 @@ class EEGDeviceReader(object):
             bgr = matplotlib_to_opencv_image(fig)
 
             self.bgr_list.append((timestamp, bgr))
+
+        LOGGER.debug('Plot data stops.')
 
     def get_data_buffer_size(self):
         """Get the current buffer size for the data_buffer

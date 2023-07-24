@@ -29,8 +29,8 @@ import matplotlib.pyplot as plt
 default_put_text_kwargs = dict(
     org=(10, 50),  # x, y
     fontFace=cv2.FONT_HERSHEY_SIMPLEX,
-    fontScale=1,
-    thickness=2,
+    fontScale=0.6,
+    thickness=1,
     color=(0, 200, 0),
     lineType=cv2.LINE_AA
 )
@@ -50,7 +50,7 @@ def uint8(x):
     return x.astype(np.uint8)
 
 
-def put_text(bgr, text, input_kwargs=dict(org=(10, 20), fontScale=0.5, thickness=1, color=(0, 200, 0))):
+def put_text(bgr, text, **input_kwargs):
     """Put text into the opencv image
 
     Args:

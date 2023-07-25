@@ -26,7 +26,7 @@ import matplotlib.pyplot as plt
 from threading import Thread
 from datetime import datetime
 
-from . import LOGGER
+from . import LOGGER, CONF
 from .toolbox import matplotlib_to_opencv_image
 
 # %%
@@ -49,20 +49,34 @@ class EEGDeviceReader(object):
     The sample_rate refers the sampling rate of the device.
     '''
     channels = 64  # number of channels
-    package_length = 40  # number of time points per package
     sample_rate = 1000  # Hz
+    package_length = 40  # number of time points per package
     packages_limit = 5000  # number of packages
+    display_window_length = 2  # seconds
+    display_inch_width = 4  # inch
+    display_inch_height = 3  # inch
+    display_dpi = 100  # DPI
     package_interval = package_length / sample_rate  # Interval between packages
 
     def __init__(self):
+        self.conf_override()
         self.running = False
-        LOGGER.debug('EEGDeviceReader initialized with {}'.format(dict(
-            channels=self.channels,
-            package_length=self.package_length,
-            sample_rate=self.sample_rate,
-            packages_limit=self.packages_limit
-        )))
+
+        LOGGER.debug(
+            'Initialize {} with {}'.format(self.__class__, self.__dict__))
         pass
+
+    def conf_override(self):
+        for key, value in CONF['eeg'].items():
+            if not (hasattr(self, key)):
+                LOGGER.warning('Invalid key: {} in CONF'.format(key))
+                continue
+            setattr(self, key, value)
+
+        self.package_interval = self.package_length / \
+            self.sample_rate  # Interval between packages
+
+        LOGGER.debug('Override the options with CONF')
 
     def start(self):
         if not self.running:
@@ -147,7 +161,8 @@ class EEGDeviceReader(object):
 
             timestamp = fetched[-1][1]
 
-            fig, axe = plt.subplots(1, 1, figsize=(4, 4), dpi=100)
+            fig, axe = plt.subplots(1, 1, figsize=(
+                self.display_inch_width, self.display_inch_height), dpi=self.display_dpi)
 
             current_package = fetched[-1][0] % packages
 

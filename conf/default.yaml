@@ -1,0 +1,25 @@
+window_name: Very Fast Very Stable System
+root_path: !!python/object/apply:pathlib.WindowsPath
+- Z:\
+- opencv-camera
+log_path: !!python/object/apply:pathlib.WindowsPath
+- Z:\
+- opencv-camera
+- log
+- '{time}.log'
+eeg:
+  channels: 32
+  sample_rate: 1000
+  package_length: 40
+  packages_limit: 5000
+  display_window_length: 2
+  display_inch_width: 4
+  display_inch_height: 3
+  display_dpi: 100
+  not_exist: Not exist option
+video:
+  video_capture_idx: 0
+  display_width: 400
+  display_height: 300
+keyboard:
+  quite_key_code: q

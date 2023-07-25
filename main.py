@@ -29,12 +29,12 @@ from rich import print
 from util.eeg_device_reader import EEGDeviceReader
 from util.video_capture_device_reader import VideoCaptureReader
 from util.toolbox import uint8, put_text
-from util import LOGGER
+from util import LOGGER, CONF
 
 # %%
 
-quite_key_code = 'q'
-window_name = 'Very Fast Very Stable System'
+quite_key_code = CONF['keyboard']['quite_key_code']
+window_name = CONF['window_name']
 
 
 # %% ---- 2023-07-20 ------------------------
@@ -121,6 +121,14 @@ def keypress_callback(key):
     if key.name == quite_key_code:
         LOGGER.debug('Quite key code is received.')
         DY_OPT.stop()
+
+    if key.name == '=':
+        CONF['video']['display_height'] += 10
+        video_capture_reader.conf_override()
+
+    if key.name == '-':
+        CONF['video']['display_height'] -= 10
+        video_capture_reader.conf_override()
 
     return
 

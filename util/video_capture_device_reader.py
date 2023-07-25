@@ -22,7 +22,7 @@ import cv2
 
 import numpy as np
 
-from . import LOGGER
+from . import LOGGER, CONF
 from .toolbox import uint8
 
 
@@ -33,27 +33,44 @@ from .toolbox import uint8
 # %% ---- 2023-07-24 ------------------------
 # Play ground
 class VideoCaptureReader(object):
+    video_capture_idx = 0  # cv2.VideoCapture(#)
+    display_width = 400  # px
+    display_height = 300  # px
 
     def __init__(self):
+        self.conf_override()
         self.vid = None
         self.connect()
+
+        LOGGER.debug(
+            'Initialize {} with {}'.format(self.__class__, self.__dict__))
         pass
 
-    def connect(self):
-        with LOGGER.catch():
-            self.vid = cv2.VideoCapture(0)
-            LOGGER.debug('Connected to video capture')
+    def conf_override(self):
+        for key, value in CONF['video'].items():
+            if not (hasattr(self, key)):
+                LOGGER.warning('Invalid key: {} in CONF'.format(key))
+                continue
+            setattr(self, key, value)
 
-    def read(self, size=(400, 400)):
+        LOGGER.debug('Override the options with CONF')
+
+    @LOGGER.catch
+    def connect(self):
+        self.vid = cv2.VideoCapture(0)
+        LOGGER.debug('Connected to video capture')
+
+    def read(self):
         success_flag, bgr = self.vid.read()
 
         if not success_flag:
             LOGGER.error('Receives frame fails')
-            bgr = uint8(np.random.randint(50, 200, (size[0], size[1], 3)))
+            bgr = uint8(np.random.randint(
+                50, 200, (self.display_height, self.display_width, 3)))
             bgr[:40] = 0
             return bgr
 
-        return cv2.resize(bgr, size)
+        return cv2.resize(bgr, (self.display_width, self.display_height))
 
 
 # %% ---- 2023-07-24 ------------------------

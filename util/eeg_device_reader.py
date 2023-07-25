@@ -27,7 +27,7 @@ from threading import Thread
 from datetime import datetime
 
 from . import LOGGER, CONF
-from .toolbox import matplotlib_to_opencv_image
+from .toolbox import matplotlib_to_opencv_image, uint8
 
 # %%
 
@@ -77,6 +77,11 @@ class EEGDeviceReader(object):
             self.sample_rate  # Interval between packages
 
         LOGGER.debug('Override the options with CONF')
+
+    def placeholder_image(self):
+        return uint8(np.zeros((self.display_inch_height*self.display_dpi,
+                               self.display_inch_width*self.display_dpi,
+                               3)))
 
     def start(self):
         if not self.running:

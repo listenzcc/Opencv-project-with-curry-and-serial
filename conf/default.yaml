@@ -1,4 +1,4 @@
-window_name: Very Fast Very Stable System
+project_name: Very Fast Very Stable System
 root_path: !!python/object/apply:pathlib.WindowsPath
 - Z:\
 - opencv-camera
@@ -23,3 +23,14 @@ video:
   display_height: 300
 keyboard:
   quite_key_code: q
+main_window:
+  width: 1200
+  height: 800
+  video_panel_x: 10
+  video_panel_y: 10
+  eeg_panel_x: 500
+  eeg_panel_y: 10
+osd:
+  org:
+  - 10
+  - 20

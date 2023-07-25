@@ -92,6 +92,29 @@ def matplotlib_to_opencv_image(fig):
     # Convert RGB to BGR
     return cv2.cvtColor(arr, cv2.COLOR_RGB2BGR)
 
+
+def timestamp2milliseconds(t):
+    """Convert timestamp into milliseconds.
+
+    Args:
+        t (timestamp): The input timestamp.
+
+    Returns:
+        int: The converted time in milliseconds.
+    """
+    return int(t * 1000)
+
+
+def delay2fps(delay):
+    """Compute fps for a given delay.
+
+    Args:
+        delay (float): The input delay,
+
+    Returns:
+        float: The fps for the given delay.
+    """
+    return 1 / delay if delay > 0 else 0
 # %% ---- 2023-07-24 ------------------------
 # Play ground
 

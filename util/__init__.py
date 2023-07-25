@@ -57,13 +57,28 @@ keyboard_config = dict(
     quite_key_code='q'  # Press the key to quite
 )
 
+main_window_config = dict(
+    width=1200,  # px, window width
+    height=800,  # px, window height
+    video_panel_x=10,  # px, offset x of video panel
+    video_panel_y=10,  # px, offset y of video panel
+    eeg_panel_x=500,  # px, offset x of eeg panel
+    eeg_panel_y=10,  # px, offset y of eeg panel
+)
+
+osd_config = dict(
+    org=(10, 20),  # (px in x-axis, px in y-axis), the bottom-left corner of the osd
+)
+
 main_config = dict(
-    window_name='Very Fast Very Stable System',
+    project_name='Very Fast Very Stable System',
     root_path=root,
     log_path=Path(__file__).parent.parent.joinpath('log/{time}.log'),
     eeg=eeg_config,
     video=video_config,
-    keyboard=keyboard_config
+    keyboard=keyboard_config,
+    main_window=main_window_config,
+    osd=osd_config,
 )
 
 

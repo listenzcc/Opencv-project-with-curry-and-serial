@@ -28,68 +28,22 @@ from rich import print
 
 from util.eeg_device_reader import EEGDeviceReader
 from util.video_capture_device_reader import VideoCaptureReader
-from util.toolbox import uint8, put_text
+from util.main_window import MainWindow
+from util.toolbox import uint8, put_text, timestamp2milliseconds, delay2fps
 from util import LOGGER, CONF
 
 # %%
 
+project_name = CONF['project_name']
 quite_key_code = CONF['keyboard']['quite_key_code']
-window_name = CONF['window_name']
 
 
 # %% ---- 2023-07-20 ------------------------
 # Function and class
 
 
-class BigPicture(object):
-    """The big picture of the main window
-
-    """
-    width = 1000
-    height = 800
-
-    def __init__(self):
-        """Initialize the background.
-        """
-        self.reset_background()
-        pass
-
-    def reset_background(self):
-        """Reset the background with black bgr.
-
-        Returns:
-            opencv image: The black image.
-        """
-        zero_bgr = uint8(np.zeros((self.height, self.width, 3)) + 50)
-        self.screen_bgr = zero_bgr
-        return zero_bgr
-
-    def overlay_bgr(self, bgr, x=0, y=0):
-        """Overlay to the background
-
-        Args:
-            bgr (opencv image): The covering bgr image;
-            x (int, optional): The x coordinate of the bgr. Defaults to 0.
-            y (int, optional): The y coordinate of the bgr. Defaults to 0.
-
-        Returns:
-            opencv image: The updated background image.
-        """
-
-        shape = bgr.shape
-
-        if y + shape[0] > self.height:
-            bgr = bgr[:self.height - y]
-
-        if x + shape[1] > self.width:
-            bgr = bgr[:, :self.width - x]
-
-        self.screen_bgr[y:y+shape[0], x:x+shape[1]] = bgr
-        return self.screen_bgr
-
-
-class DynamicOption(object):
-    """The DynamicOption class
+class RunningOption(object):
+    """The options on runtime
     """
 
     def __init__(self):
@@ -106,7 +60,7 @@ class DynamicOption(object):
         self.running = False
 
 
-DY_OPT = DynamicOption()
+running_option = RunningOption()
 
 
 def keypress_callback(key):
@@ -116,11 +70,11 @@ def keypress_callback(key):
         key (key): The key being pressed.
     """
 
-    LOGGER.debug('Keypress {}'.format(key))
+    LOGGER.debug('Keypress {}, {}'.format(key, key.name))
 
     if key.name == quite_key_code:
         LOGGER.debug('Quite key code is received.')
-        DY_OPT.stop()
+        running_option.stop()
 
     if key.name == '=':
         CONF['video']['display_height'] += 10
@@ -133,48 +87,26 @@ def keypress_callback(key):
     return
 
 
-def milliseconds(t):
-    """Convert timestamp into milliseconds.
-
-    Args:
-        t (timestamp): The input timestamp.
-
-    Returns:
-        int: The converted time in milliseconds.
-    """
-    return int(t * 1000)
-
-
-def fps(delay):
-    """Compute fps for a given delay.
-
-    Args:
-        delay (float): The input delay,
-
-    Returns:
-        float: The fps for the given delay.
-    """
-    return 1 / delay if delay > 0 else 0
-
-
 # %% ---- 2023-07-20 ------------------------
 # Play ground
+# Initialize the workers
 video_capture_reader = VideoCaptureReader()
 
 eeg_device_reader = EEGDeviceReader()
 eeg_device_reader.start()
 
-BIG_PIC = BigPicture()
+main_window = MainWindow()
 
-DY_OPT.start()
+# %%
+running_option.start()
 keyboard.on_press(keypress_callback, suppress=True)
 
 tic = time.time()
 toc_limit = tic + 100  # Seconds
 
-eeg_image = uint8(np.zeros((400, 400, 3)))
+eeg_image = eeg_device_reader.placeholder_image()
 
-while DY_OPT.running:
+while running_option.running:
     video_image = video_capture_reader.read()
 
     pair = eeg_device_reader.read_bgr()
@@ -187,22 +119,23 @@ while DY_OPT.running:
 
     if eeg_image_refresh_flag:
         text = '{:06.2f}'.format(toc - eeg_timestamp)
-        put_text(eeg_image, text, org=(10, 20))
-        BIG_PIC.overlay_bgr(eeg_image, 500, 10)
+        put_text(eeg_image, text, org=CONF['osd']['org'])
+        main_window.overlay_eeg_panel(eeg_image)
 
-    text = '{:04d} | {:06.2f} Fps'.format(milliseconds(delay), fps(delay))
-    put_text(video_image, text, org=(10, 20))
-    BIG_PIC.overlay_bgr(video_image, 10, 10)
+    text = '{:04d} | {:06.2f} Fps'.format(
+        timestamp2milliseconds(delay), delay2fps(delay))
+    put_text(video_image, text, org=CONF['osd']['org'])
+    main_window.overlay_video_panel(video_image)
 
-    cv2.imshow(window_name, BIG_PIC.screen_bgr)
-    cv2.setWindowTitle(window_name, '{} - {}'.format(window_name, tic))
+    cv2.imshow(project_name, main_window.screen_bgr)
+    cv2.setWindowTitle(project_name, '{} - {}'.format(project_name, tic))
     cv2.pollKey()
 
     tic = time.time()
 
     if toc > toc_limit:
         print('Time exceeds the limit, stop it.')
-        DY_OPT.stop()
+        running_option.stop()
 
 eeg_device_reader.stop()
 

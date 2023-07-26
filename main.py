@@ -26,7 +26,8 @@ import numpy as np
 
 from rich import print
 
-from util.eeg_device_reader import EEGDeviceReader
+# from util.eeg_device_reader import EEGDeviceReader
+from util.eeg_device_reader_simulation import EEGDeviceReader
 from util.video_capture_device_reader import VideoCaptureReader
 from util.main_window import MainWindow
 from util.toolbox import uint8, put_text, timestamp2milliseconds, delay2fps

@@ -1,0 +1,237 @@
+"""
+File: stm32_device_reader.py
+Author: Chuncheng Zhang
+Date: 2023-08-08
+Copyright & Email: chuncheng.zhang@ia.ac.cn
+
+Purpose:
+    Amazing things
+
+Functions:
+    1. Requirements and constants
+    2. Function and class
+    3. Play ground
+    4. Pending
+    5. Pending
+"""
+
+
+# %% ---- 2023-08-08 ------------------------
+# Requirements and constants
+import time
+import struct
+import serial
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+from threading import Thread
+from datetime import datetime
+
+from . import LOGGER, CONF
+from .toolbox import matplotlib_to_opencv_image, uint8
+
+# Use agg backend to make the fig rendering in the thread
+import seaborn as sns
+import matplotlib
+sns.set_theme()
+matplotlib.use('agg')
+
+# %% ---- 2023-08-08 ------------------------
+# Function and class
+
+
+def decode_bytearray(bytearray):
+    a = struct.unpack('>I', bytearray[2:6])
+    b = struct.unpack('>f', bytearray[6:10])
+    c = struct.unpack('>f', bytearray[10:14])
+    d = struct.unpack('>f', bytearray[14:18])
+
+    return dict(
+        idx=a[0],
+        ecg=b[0],
+        esg=c[0],
+        tem=d[0],
+        timestamp=time.time()
+    )
+
+
+class Stm32DeviceReader(object):
+    packages_limit = 5000  # number of packages
+    display_window_length = 5  # seconds
+    display_inch_width = 4  # inches
+    display_inch_height = 4  # inches
+    display_dpi = 100  # DPI
+    sample_rate = 10  # Hz
+    channels_colors = dict(
+        ecg='#ff0000',
+        esg='#00ff00',
+        tem='#0000ff'
+    )
+
+    def __init__(self):
+        self.conf_override()
+        self.running = False
+
+        LOGGER.debug(
+            'Initialize {} with {}'.format(self.__class__, self.__dict__))
+        pass
+
+    def conf_override(self):
+        for key, value in CONF['stm32'].items():
+            if not (hasattr(self, key)):
+                LOGGER.warning('Invalid key: {} in CONF'.format(key))
+                continue
+            setattr(self, key, value)
+
+        LOGGER.debug('Override the options with CONF')
+
+    def start(self):
+        if not self.running:
+            self.run_forever()
+        else:
+            LOGGER.error('Can not start, since it is already running')
+
+    def placeholder_image(self):
+        return uint8(np.zeros((self.display_inch_height*self.display_dpi,
+                               self.display_inch_width*self.display_dpi,
+                               3)))
+
+    def stop(self):
+        self.running = False
+
+    def _read_data(self):
+        self.data_buffer = []
+
+        LOGGER.debug('Read data loop starts')
+
+        try:
+            with serial.Serial('COM4', 115200) as ser:
+                while self.running:
+                    incoming = ser.read(21)
+                    package = decode_bytearray(incoming)
+                    self.data_buffer.append(package)
+
+                if self.get_data_buffer_size() > self.packages_limit:
+                    LOGGER.warning(
+                        'Data buffer exceeds {} packages.'.format(self.packages_limit))
+                    self.data_buffer.pop(0)
+
+        except Exception as err:
+            LOGGER.error("Serial reading failed, {}".format(err))
+
+        LOGGER.debug('Read data loop stops.')
+
+    def _plot_data(self):
+        """Plot the data,
+        it append the mpl fig into self.bgr_list.
+        """
+
+        packages = int(self.display_window_length * self.sample_rate)
+        self.bgr_list = []
+
+        LOGGER.debug('Plot data starts.')
+
+        while self.running:
+            fetched = self.peek_latest_data_by_length(packages)
+
+            if fetched is None:
+                continue
+
+            timestamp = fetched[-1]['timestamp']
+
+            fig, axe = plt.subplots(1, 1, figsize=(
+                self.display_inch_width, self.display_inch_height), dpi=self.display_dpi)
+
+            latest_package_idx = fetched[-1]['idx'] % packages
+
+            # Draw the left part of the signal
+            select = [e for e in fetched
+                      if e['idx'] % packages < latest_package_idx]
+            n = len(select)
+            if n > 0:
+                t = np.linspace(0, n/self.sample_rate, n, endpoint=False)
+                for name, color in self.channels_colors.items():
+                    array = [e[name] for e in select]
+                    axe.plot(t, array, label=name, color=color)
+
+            axe.legend()
+
+            # Draw the right part of the signal
+            select = [e for e in fetched
+                      if e['idx'] % packages > latest_package_idx]
+            n = len(select)
+            if n > 0:
+                t = np.linspace(self.display_window_length - n/self.sample_rate,
+                                self.display_window_length, n, endpoint=False)
+                for name, color in self.channels_colors.items():
+                    array = [e[name] for e in select]
+                    axe.plot(t, array, linewidth=0.5, label=name, color=color)
+
+            # Setup axe
+            axe.set_xlim(0, self.display_window_length)
+
+            axe.set_title(
+                str(datetime.fromtimestamp(timestamp).today()))
+
+            # Convert the bgr into the opencv-image
+            bgr = matplotlib_to_opencv_image(fig)
+
+            self.bgr_list.append((timestamp, bgr))
+
+            pass
+
+        LOGGER.debug('Plot data stops.')
+
+    def read_bgr(self):
+        if len(self.bgr_list) < 1:
+            return None
+
+        timestamp, bgr = self.bgr_list.pop(0)
+
+        return timestamp, bgr
+
+    def get_data_buffer_size(self):
+        """Get the current buffer size for the data_buffer
+
+        Returns:
+            int: The buffer size.
+        """
+        return len(self.data_buffer)
+
+    def peek_latest_data_by_length(self, length=50):
+        """Peek the latest data in the self.data_buffer with given length.
+
+        If there is no data available, return None.
+
+        Args:
+            length (int, optional): How many packages are required, the length in seconds are length x self.package_interval. Defaults to 50.
+
+        Returns:
+            list: The data being fetched. The elements of the list are (idx, timestamp, data of (self.channels x self.package_length)).
+            None if there is no data available.
+        """
+        if self.get_data_buffer_size() < 1:
+            return None
+
+        output = [e for e in self.data_buffer[-length:]]
+
+        return output
+
+    def run_forever(self):
+        """Run the loops forever.
+        """
+        self.running = True
+        Thread(target=self._read_data, daemon=True).start()
+        Thread(target=self._plot_data, daemon=True).start()
+        pass
+# %% ---- 2023-08-08 ------------------------
+# Play ground
+
+
+# %% ---- 2023-08-08 ------------------------
+# Pending
+
+
+# %% ---- 2023-08-08 ------------------------
+# Pending

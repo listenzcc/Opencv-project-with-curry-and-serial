@@ -28,6 +28,7 @@ from rich import print
 
 # from util.eeg_device_reader import EEGDeviceReader
 from util.eeg_device_reader_simulation import EEGDeviceReader
+from util.stm32_device_reader import Stm32DeviceReader
 from util.video_capture_device_reader import VideoCaptureReader
 from util.main_window import MainWindow
 from util.toolbox import uint8, put_text, timestamp2milliseconds, delay2fps
@@ -96,6 +97,9 @@ video_capture_reader = VideoCaptureReader()
 eeg_device_reader = EEGDeviceReader()
 eeg_device_reader.start()
 
+stm32_device_reader = Stm32DeviceReader()
+stm32_device_reader.start()
+
 main_window = MainWindow()
 
 # %%
@@ -106,6 +110,8 @@ tic = time.time()
 toc_limit = tic + 100  # Seconds
 
 eeg_image = eeg_device_reader.placeholder_image()
+stm32_image = stm32_device_reader.placeholder_image()
+
 
 while running_option.running:
     video_image = video_capture_reader.read()
@@ -115,6 +121,11 @@ while running_option.running:
     if eeg_image_refresh_flag:
         eeg_timestamp, eeg_image = pair
 
+    pair = stm32_device_reader.read_bgr()
+    stm32_image_refresh_flag = pair is not None
+    if stm32_image_refresh_flag:
+        stm32_timestamp, stm32_image = pair
+
     toc = time.time()
     delay = toc - tic
 
@@ -122,6 +133,11 @@ while running_option.running:
         text = '{:06.2f}'.format(toc - eeg_timestamp)
         put_text(eeg_image, text, org=CONF['osd']['org'])
         main_window.overlay_eeg_panel(eeg_image)
+
+    if stm32_image_refresh_flag:
+        text = '{:06.2f}'.format(toc - stm32_timestamp)
+        put_text(stm32_image, text, org=CONF['osd']['org'])
+        main_window.overlay_stm32_panel(stm32_image)
 
     text = '{:04d} | {:06.2f} Fps'.format(
         timestamp2milliseconds(delay), delay2fps(delay))

@@ -32,12 +32,14 @@ class MainWindow(object):
     """The big picture of the main window
 
     """
-    width = 1200,  # px, window width
+    width = 1200,  # px, window widthSTM32DeviceReader
     height = 800,  # px, window height
     video_panel_x = 10  # px, offset x of video panel
     video_panel_y = 10  # px, offset y of video panel
     eeg_panel_x = 500  # px, offset x of eeg panel
     eeg_panel_y = 10  # px, offset y of eeg panel
+    stm32_panel_x = 10  # px, offset x of stm32 panel
+    stm32_panel_y = 500  # px, offset x of stm32 panel
 
     def __init__(self):
         """Initialize the background.
@@ -77,6 +79,9 @@ class MainWindow(object):
 
     def overlay_eeg_panel(self, bgr):
         self.overlay_bgr(bgr, x=self.eeg_panel_x, y=self.eeg_panel_y)
+
+    def overlay_stm32_panel(self, bgr):
+        self.overlay_bgr(bgr, x=self.stm32_panel_x, y=self.stm32_panel_y)
 
     def overlay_bgr(self, bgr, x=0, y=0):
         """Overlay to the background

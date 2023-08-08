@@ -36,15 +36,24 @@ root = Path(__file__).parent.parent
 # %% ---- 2023-07-24 ------------------------
 # Pending
 eeg_config = dict(
-    channels=32,  # number of channels
+    channels=64,  # number of channels
     sample_rate=1000,  # Hz
-    package_length=40,  # number of time points per package
+    package_length=100,  # number of time points per package
     packages_limit=5000,  # number of packages
-    display_window_length=2,  # seconds
+    display_window_length=5,  # seconds
     display_inch_width=4,  # inch
-    display_inch_height=3,  # inch
+    display_inch_height=7,  # inch
     display_dpi=100,  # DPI
     not_exist='Not exist option',
+)
+
+stm32_config = dict(
+    packages_limit=5000,  # number of packages
+    sample_rate=10,  # Hz
+    display_window_length=5,  # seconds
+    display_inch_width=4,  # inch
+    display_inch_height=4,  # inch
+    display_dpi=100,  # DPI
 )
 
 video_config = dict(
@@ -64,6 +73,8 @@ main_window_config = dict(
     video_panel_y=10,  # px, offset y of video panel
     eeg_panel_x=500,  # px, offset x of eeg panel
     eeg_panel_y=10,  # px, offset y of eeg panel
+    stm32_panel_x=10,  # px, offset x of stm32 panel
+    stm32_panel_y=400  # px, offset x of stm32 panel
 )
 
 osd_config = dict(
@@ -75,6 +86,7 @@ main_config = dict(
     root_path=root,
     log_path=Path(__file__).parent.parent.joinpath('log/{time}.log'),
     eeg=eeg_config,
+    stm32=stm32_config,
     video=video_config,
     keyboard=keyboard_config,
     main_window=main_window_config,

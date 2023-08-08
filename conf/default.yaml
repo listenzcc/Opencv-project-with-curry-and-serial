@@ -1,22 +1,35 @@
 project_name: Very Fast Very Stable System
 root_path: !!python/object/apply:pathlib.WindowsPath
-- Z:\
+- C:\
+- Users
+- zcc
+- Desktop
 - opencv-camera
 log_path: !!python/object/apply:pathlib.WindowsPath
-- Z:\
+- C:\
+- Users
+- zcc
+- Desktop
 - opencv-camera
 - log
 - '{time}.log'
 eeg:
-  channels: 32
+  channels: 64
   sample_rate: 1000
-  package_length: 40
+  package_length: 100
   packages_limit: 5000
-  display_window_length: 2
+  display_window_length: 5
   display_inch_width: 4
-  display_inch_height: 3
+  display_inch_height: 7
   display_dpi: 100
   not_exist: Not exist option
+stm32:
+  packages_limit: 5000
+  sample_rate: 10
+  display_window_length: 5
+  display_inch_width: 4
+  display_inch_height: 4
+  display_dpi: 100
 video:
   video_capture_idx: 0
   display_width: 400
@@ -30,6 +43,8 @@ main_window:
   video_panel_y: 10
   eeg_panel_x: 500
   eeg_panel_y: 10
+  stm32_panel_x: 10
+  stm32_panel_y: 400
 osd:
   org:
   - 10

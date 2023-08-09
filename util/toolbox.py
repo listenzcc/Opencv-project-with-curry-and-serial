@@ -56,7 +56,7 @@ def put_text(bgr, text, **input_kwargs):
     Args:
         bgr (opencv image): The the image being put, (height x width x 3);
         text (str): The text being put;
-        input_kwargs (dict, optional): The customized kwargs to cv2.putText. Defaults to dict(org=(10, 20), fontScale=0.5, thickness=1, color=(0, 200, 0)).
+        input_kwargs (dict, optional): The customized kwargs to cv2.putText.
 
     Returns:
         opencv image: The image with the putting text.

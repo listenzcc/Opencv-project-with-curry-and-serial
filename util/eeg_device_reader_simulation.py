@@ -158,6 +158,7 @@ class EEGDeviceReader(object):
 
             timestamp = fetched[-1][1]
 
+            plt.style.use('seaborn')
             fig, axe = plt.subplots(1, 1, figsize=(
                 self.display_inch_width, self.display_inch_height), dpi=self.display_dpi)
 
@@ -220,10 +221,40 @@ class EEGDeviceReader(object):
             list: The data being fetched. The elements of the list are (idx, timestamp, data of (self.channels x self.package_length)).
             None if there is no data available.
         """
-        if self.get_data_buffer_size() < 1:
+
+        n = self.get_data_buffer_size()
+
+        if n < 1:
+            LOGGER.error('The data buffer is empty')
             return None
 
+        if n < length:
+            LOGGER.warning(f'Can not peek data with {length} samples.')
+
         return list(self.data_buffer[-length:])
+
+    def peek_latest_data_by_milliseconds(self, milliseconds=1000):
+        """Peek the latest data available for given milliseconds.
+
+        Args:
+            milliseconds (int, optional): The milliseconds being required. Defaults to 1000.
+
+        Returns:
+            np.array: The (64 x n) array, the n refers the samples and the 3 refers the channels, the order is given in self.channels_colors.
+        """
+        num_packages = int(milliseconds / 1000 *
+                           self.sample_rate / self.package_length) + 1
+
+        n = int(milliseconds / 1000 * self.sample_rate)
+
+        packages = self.peek_latest_data_by_length(num_packages)
+
+        if packages is None:
+            LOGGER.error(
+                f'Failed peek_latest_data_by_length with {milliseconds}')
+            return None
+
+        return np.concatenate([e[2] for e in packages], axis=1)[:, -n:]
 
     def run_forever(self):
         """Run the loops forever.

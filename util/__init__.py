@@ -63,6 +63,14 @@ stm32_config = dict(
     )
 )
 
+decoder_config = dict(
+    eeg_data_length=1000,  # milliseconds
+    stm32_data_length=1000,  # milliseconds
+    display_inch_width=4,  # inch
+    display_inch_height=2,  # inch
+    display_dpi=100,  # DPI
+)
+
 video_config = dict(
     video_capture_idx=0,  # cv2.VideoCapture(#)
     display_width=400,  # px
@@ -81,7 +89,9 @@ main_window_config = dict(
     eeg_panel_x=10,  # px, offset x of eeg panel
     eeg_panel_y=10,  # px, offset y of eeg panel
     stm32_panel_x=420,  # px, offset x of stm32 panel
-    stm32_panel_y=10  # px, offset x of stm32 panel
+    stm32_panel_y=10,  # px, offset x of stm32 panel
+    decoder_panel_x=10,  # px, offset x of decoder panel
+    decoder_panel_y=520  # px, offset y of decoder panel
 )
 
 osd_config = dict(
@@ -98,6 +108,7 @@ main_config = dict(
     keyboard=keyboard_config,
     main_window=main_window_config,
     osd=osd_config,
+    decoder=decoder_config
 )
 
 

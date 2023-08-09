@@ -155,18 +155,21 @@ class Stm32DeviceReader(object):
                     array = [e[name] for e in select]
                     axe.plot(t, array, label=name, color=color)
 
-            axe.legend()
+                axe.legend()
 
             # Draw the right part of the signal
             select = [e for e in fetched
                       if e['idx'] % packages > latest_package_idx]
-            n = len(select)
-            if n > 0:
-                t = np.linspace(self.display_window_length - n/self.sample_rate,
-                                self.display_window_length, n, endpoint=False)
+            m = len(select)
+            if m > 0:
+                t = np.linspace(self.display_window_length - m/self.sample_rate,
+                                self.display_window_length, m, endpoint=False)
                 for name, color in self.channels_colors.items():
                     array = [e[name] for e in select]
                     axe.plot(t, array, linewidth=0.5, label=name, color=color)
+
+                if n == 0:
+                    axe.legend()
 
             # Setup axe
             axe.set_xlim(0, self.display_window_length)
@@ -211,10 +214,36 @@ class Stm32DeviceReader(object):
             list: The data being fetched. The elements of the list are (idx, timestamp, data of (self.channels x self.package_length)).
             None if there is no data available.
         """
-        if self.get_data_buffer_size() < 1:
+        n = self.get_data_buffer_size()
+
+        if n < 1:
+            LOGGER.error('The data buffer is empty')
             return None
 
+        if n < length:
+            LOGGER.warning(f'Can not peek data with {length} samples.')
+
         return list(self.data_buffer[-length:])
+
+    def peek_latest_data_by_milliseconds(self, milliseconds=1000):
+        """Peek the latest data available for given milliseconds.
+
+        Args:
+            milliseconds (int, optional): The milliseconds being required. Defaults to 1000.
+
+        Returns:
+            np.array: The (3 x n) array, the n refers the samples and the 3 refers the channels, the order is given in self.channels_colors.
+        """
+        length = int(milliseconds / 1000 * self.sample_rate)
+
+        array = self.peek_latest_data_by_length(length)
+
+        if array is None:
+            LOGGER.error(
+                f'Failed peek_latest_data_by_length with {milliseconds}')
+            return None
+
+        return np.array([[e[k] for k in self.channels_colors] for e in array]).transpose()
 
     def run_forever(self):
         """Run the loops forever.

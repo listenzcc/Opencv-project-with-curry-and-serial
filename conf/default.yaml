@@ -51,7 +51,15 @@ main_window:
   eeg_panel_y: 10
   stm32_panel_x: 420
   stm32_panel_y: 10
+  decoder_panel_x: 10
+  decoder_panel_y: 520
 osd:
   org:
   - 10
   - 20
+decoder:
+  eeg_data_length: 1000
+  stm32_data_length: 1000
+  display_inch_width: 4
+  display_inch_height: 2
+  display_dpi: 100

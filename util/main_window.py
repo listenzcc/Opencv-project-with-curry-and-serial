@@ -40,6 +40,8 @@ class MainWindow(object):
     eeg_panel_y = 10  # px, offset y of eeg panel
     stm32_panel_x = 10  # px, offset x of stm32 panel
     stm32_panel_y = 500  # px, offset x of stm32 panel
+    decoder_panel_x = 10  # px, offset x of decoder panel
+    decoder_panel_y = 620  # px, offset y of decoder panel
 
     def __init__(self):
         """Initialize the background.
@@ -79,6 +81,9 @@ class MainWindow(object):
 
     def overlay_stm32_panel(self, bgr):
         self.overlay_bgr(bgr, x=self.stm32_panel_x, y=self.stm32_panel_y)
+
+    def overlay_decoder_panel(self, bgr):
+        self.overlay_bgr(bgr, x=self.decoder_panel_x, y=self.decoder_panel_y)
 
     def overlay_bgr(self, bgr, x=0, y=0):
         """Overlay to the background

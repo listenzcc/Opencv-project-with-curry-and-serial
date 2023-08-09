@@ -62,14 +62,12 @@ class EEGDeviceReader(object):
         self.conf_override()
         self.running = False
 
-        LOGGER.debug(
-            'Initialize {} with {}'.format(self.__class__, self.__dict__))
-        pass
+        LOGGER.debug(f'Initialize {self.__class__} with {self.__dict__}')
 
     def conf_override(self):
         for key, value in CONF['eeg'].items():
             if not (hasattr(self, key)):
-                LOGGER.warning('Invalid key: {} in CONF'.format(key))
+                LOGGER.warning(f'Invalid key: {key} in CONF')
                 continue
             setattr(self, key, value)
 
@@ -114,7 +112,7 @@ class EEGDeviceReader(object):
 
             if self.get_data_buffer_size() > self.packages_limit:
                 LOGGER.warning(
-                    'Data buffer exceeds {} packages.'.format(self.packages_limit))
+                    f'Data buffer exceeds {self.packages_limit} packages.')
                 self.data_buffer.pop(0)
 
             time.sleep(self.package_interval)
@@ -154,7 +152,6 @@ class EEGDeviceReader(object):
         LOGGER.debug('Plot data starts.')
 
         while self.running:
-
             fetched = self.peek_latest_data_by_length(packages)
             if fetched is None:
                 continue
@@ -166,10 +163,9 @@ class EEGDeviceReader(object):
 
             current_package = fetched[-1][0] % packages
 
-            # Draw the left part of the signal
-            select = [e[2] for e in fetched
-                      if (e[0] % packages) < current_package]
-            if len(select) > 0:
+            if select := [
+                e[2] for e in fetched if (e[0] % packages) < current_package
+            ]:
                 d = np.concatenate(select, axis=1)
                 self.add_offset(d)
 
@@ -178,10 +174,9 @@ class EEGDeviceReader(object):
 
                 axe.plot(t, d.transpose())
 
-            # Draw the right part of the signal
-            select = [e[2] for e in fetched
-                      if (e[0] % packages) > current_package]
-            if len(select) > 0:
+            if select := [
+                e[2] for e in fetched if (e[0] % packages) > current_package
+            ]:
                 d = np.concatenate(select, axis=1)
                 self.add_offset(d)
 
@@ -194,7 +189,9 @@ class EEGDeviceReader(object):
             axe.set_xlim(0, self.display_window_length)
 
             axe.set_title(
-                str(datetime.fromtimestamp(timestamp).today()))
+                f'EEG (x64) {datetime.fromtimestamp(timestamp).today()}')
+
+            fig.tight_layout()
 
             # Convert the bgr into the opencv-image
             bgr = matplotlib_to_opencv_image(fig)
@@ -226,9 +223,7 @@ class EEGDeviceReader(object):
         if self.get_data_buffer_size() < 1:
             return None
 
-        output = [e for e in self.data_buffer[-length:]]
-
-        return output
+        return list(self.data_buffer[-length:])
 
     def run_forever(self):
         """Run the loops forever.
@@ -236,7 +231,7 @@ class EEGDeviceReader(object):
         self.running = True
         Thread(target=self._read_data, daemon=True).start()
         Thread(target=self._plot_data, daemon=True).start()
-        pass
+        return
 
 
 # %% ---- 2023-07-24 ------------------------

@@ -42,7 +42,7 @@ eeg_config = dict(
     packages_limit=5000,  # number of packages
     display_window_length=5,  # seconds
     display_inch_width=4,  # inch
-    display_inch_height=7,  # inch
+    display_inch_height=5,  # inch
     display_dpi=100,  # DPI
     not_exist='Not exist option',
 )
@@ -54,6 +54,13 @@ stm32_config = dict(
     display_inch_width=4,  # inch
     display_inch_height=4,  # inch
     display_dpi=100,  # DPI
+    port='COM5',  # port name
+    baudrate=115200,  # baudrate
+    channels_colors=dict(  # channels and their colors
+        ecg='#a00000',
+        esg='#00a000',
+        tem='#0000a0'
+    )
 )
 
 video_config = dict(
@@ -67,14 +74,14 @@ keyboard_config = dict(
 )
 
 main_window_config = dict(
-    width=1200,  # px, window width
-    height=800,  # px, window height
-    video_panel_x=10,  # px, offset x of video panel
-    video_panel_y=10,  # px, offset y of video panel
-    eeg_panel_x=500,  # px, offset x of eeg panel
+    width=840,  # px, window width
+    height=740,  # px, window height
+    video_panel_x=420,  # px, offset x of video panel
+    video_panel_y=420,  # px, offset y of video panel
+    eeg_panel_x=10,  # px, offset x of eeg panel
     eeg_panel_y=10,  # px, offset y of eeg panel
-    stm32_panel_x=10,  # px, offset x of stm32 panel
-    stm32_panel_y=400  # px, offset x of stm32 panel
+    stm32_panel_x=420,  # px, offset x of stm32 panel
+    stm32_panel_y=10  # px, offset x of stm32 panel
 )
 
 osd_config = dict(

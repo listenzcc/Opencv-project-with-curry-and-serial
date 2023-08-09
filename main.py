@@ -50,7 +50,6 @@ class RunningOption(object):
 
     def __init__(self):
         self.reset()
-        pass
 
     def reset(self):
         self.running = False
@@ -72,7 +71,7 @@ def keypress_callback(key):
         key (key): The key being pressed.
     """
 
-    LOGGER.debug('Keypress {}, {}'.format(key, key.name))
+    LOGGER.debug(f'Keypress {key}, {key.name}')
 
     if key.name == quite_key_code:
         LOGGER.debug('Quite key code is received.')
@@ -145,7 +144,7 @@ while running_option.running:
     main_window.overlay_video_panel(video_image)
 
     cv2.imshow(project_name, main_window.screen_bgr)
-    cv2.setWindowTitle(project_name, '{} - {}'.format(project_name, tic))
+    cv2.setWindowTitle(project_name, f'{project_name} - {tic}')
     cv2.pollKey()
 
     tic = time.time()

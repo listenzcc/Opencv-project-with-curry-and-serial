@@ -20,7 +20,7 @@ eeg:
   packages_limit: 5000
   display_window_length: 5
   display_inch_width: 4
-  display_inch_height: 7
+  display_inch_height: 5
   display_dpi: 100
   not_exist: Not exist option
 stm32:
@@ -30,6 +30,12 @@ stm32:
   display_inch_width: 4
   display_inch_height: 4
   display_dpi: 100
+  port: COM5
+  baudrate: 115200
+  channels_colors:
+    ecg: '#a00000'
+    esg: '#00a000'
+    tem: '#0000a0'
 video:
   video_capture_idx: 0
   display_width: 400
@@ -37,14 +43,14 @@ video:
 keyboard:
   quite_key_code: q
 main_window:
-  width: 1200
-  height: 800
-  video_panel_x: 10
-  video_panel_y: 10
-  eeg_panel_x: 500
+  width: 840
+  height: 740
+  video_panel_x: 420
+  video_panel_y: 420
+  eeg_panel_x: 10
   eeg_panel_y: 10
-  stm32_panel_x: 10
-  stm32_panel_y: 400
+  stm32_panel_x: 420
+  stm32_panel_y: 10
 osd:
   org:
   - 10

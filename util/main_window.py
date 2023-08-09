@@ -46,16 +46,14 @@ class MainWindow(object):
         """
         self.conf_override()
 
-        LOGGER.debug(
-            'Initialize {} with {}'.format(self.__class__, self.__dict__))
+        LOGGER.debug(f'Initialize {self.__class__} with {self.__dict__}')
 
         self.reset_background()
-        pass
 
     def conf_override(self):
         for key, value in CONF['main_window'].items():
             if not (hasattr(self, key)):
-                LOGGER.warning('Invalid key: {} in CONF'.format(key))
+                LOGGER.warning(f'Invalid key: {key} in CONF')
                 continue
             setattr(self, key, value)
 
@@ -70,8 +68,7 @@ class MainWindow(object):
         zero_bgr = uint8(np.zeros((self.height, self.width, 3)) + 50)
         self.screen_bgr = zero_bgr
 
-        LOGGER.debug(
-            'Generate black background with {} array'.format(zero_bgr.shape))
+        LOGGER.debug(f'Generate black background with {zero_bgr.shape} array')
         return zero_bgr
 
     def overlay_video_panel(self, bgr):
@@ -99,13 +96,15 @@ class MainWindow(object):
 
         if y + shape[0] > self.height:
             bgr = bgr[:self.height - y]
-            LOGGER.warning('Overlay exceeds the height range, {} | {}'.format(
-                y+shape[0], self.height))
+            LOGGER.warning(
+                f'Overlay exceeds the height range, {y + shape[0]} | {self.height}'
+            )
 
         if x + shape[1] > self.width:
             bgr = bgr[:, :self.width - x]
-            LOGGER.warning('Overlay exceeds the width range, {} | {}'.format(
-                x+shape[1], self.width))
+            LOGGER.warning(
+                f'Overlay exceeds the width range, {x + shape[1]} | {self.width}'
+            )
 
         self.screen_bgr[y:y+shape[0], x:x+shape[1]] = bgr
         return self.screen_bgr

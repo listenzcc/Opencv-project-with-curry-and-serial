@@ -63,24 +63,24 @@ class Stm32DeviceReader(object):
     display_inch_height = 4  # inches
     display_dpi = 100  # DPI
     sample_rate = 10  # Hz
-    channels_colors = dict(
-        ecg='#ff0000',
-        esg='#00ff00',
-        tem='#0000ff'
+    port = 'COM4'  # port name
+    baudrate = 115200  # baudrate
+    channels_colors = dict(  # channels and their colors
+        ecg='#a00000',
+        esg='#00a000',
+        tem='#0000a0'
     )
 
     def __init__(self):
         self.conf_override()
         self.running = False
 
-        LOGGER.debug(
-            'Initialize {} with {}'.format(self.__class__, self.__dict__))
-        pass
+        LOGGER.debug(f'Initialize {self.__class__} with {self.__dict__}')
 
     def conf_override(self):
         for key, value in CONF['stm32'].items():
             if not (hasattr(self, key)):
-                LOGGER.warning('Invalid key: {} in CONF'.format(key))
+                LOGGER.warning(f'Invalid key: {key} in CONF')
                 continue
             setattr(self, key, value)
 
@@ -106,7 +106,7 @@ class Stm32DeviceReader(object):
         LOGGER.debug('Read data loop starts')
 
         try:
-            with serial.Serial('COM4', 115200) as ser:
+            with serial.Serial(self.port, self.baudrate) as ser:
                 while self.running:
                     incoming = ser.read(21)
                     package = decode_bytearray(incoming)
@@ -114,11 +114,11 @@ class Stm32DeviceReader(object):
 
                 if self.get_data_buffer_size() > self.packages_limit:
                     LOGGER.warning(
-                        'Data buffer exceeds {} packages.'.format(self.packages_limit))
+                        f'Data buffer exceeds {self.packages_limit} packages.')
                     self.data_buffer.pop(0)
 
         except Exception as err:
-            LOGGER.error("Serial reading failed, {}".format(err))
+            LOGGER.error(f"Serial reading failed, {err}")
 
         LOGGER.debug('Read data loop stops.')
 
@@ -171,15 +171,15 @@ class Stm32DeviceReader(object):
             # Setup axe
             axe.set_xlim(0, self.display_window_length)
 
-            axe.set_title(
-                str(datetime.fromtimestamp(timestamp).today()))
+            axe.set_title(f'Stm32 {datetime.fromtimestamp(timestamp).today()}')
 
             # Convert the bgr into the opencv-image
+            fig.tight_layout()
             bgr = matplotlib_to_opencv_image(fig)
 
             self.bgr_list.append((timestamp, bgr))
 
-            pass
+            continue
 
         LOGGER.debug('Plot data stops.')
 
@@ -214,9 +214,7 @@ class Stm32DeviceReader(object):
         if self.get_data_buffer_size() < 1:
             return None
 
-        output = [e for e in self.data_buffer[-length:]]
-
-        return output
+        return list(self.data_buffer[-length:])
 
     def run_forever(self):
         """Run the loops forever.
@@ -224,7 +222,8 @@ class Stm32DeviceReader(object):
         self.running = True
         Thread(target=self._read_data, daemon=True).start()
         Thread(target=self._plot_data, daemon=True).start()
-        pass
+        return
+
 # %% ---- 2023-08-08 ------------------------
 # Play ground
 

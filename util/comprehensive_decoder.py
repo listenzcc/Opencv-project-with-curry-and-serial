@@ -30,8 +30,8 @@ from .toolbox import uint8, put_text
 class ComprehensiveDecoder(object):
     eeg_data_length = 1000  # milliseconds
     stm32_data_length = 1000  # milliseconds
-    display_inch_width = 4  # inch
-    display_inch_height = 2  # inch
+    display_pixel_width = 400  # pixels
+    display_pixel_height = 200  # pixels
     display_dpi = 100  # DPI
 
     def __init__(self):
@@ -43,11 +43,8 @@ class ComprehensiveDecoder(object):
 
     def empty_bgr(self):
         return uint8(
-            np.zeros((
-                self.display_inch_height * self.display_dpi,
-                self.display_inch_width * self.display_dpi,
-                3,
-            )) + 100
+            np.zeros((self.display_pixel_height,
+                     self.display_pixel_width, 3)) + 100
         )
 
     def conf_override(self):

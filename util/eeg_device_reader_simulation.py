@@ -53,8 +53,8 @@ class EEGDeviceReader(object):
     package_length = 40  # number of time points per package
     packages_limit = 5000  # number of packages
     display_window_length = 2  # seconds
-    display_inch_width = 4  # inch
-    display_inch_height = 3  # inch
+    display_pixel_width = 400  # pixels
+    display_pixel_height = 300  # pixels
     display_dpi = 100  # DPI
     package_interval = package_length / sample_rate  # Interval between packages
 
@@ -77,8 +77,8 @@ class EEGDeviceReader(object):
         LOGGER.debug('Override the options with CONF')
 
     def placeholder_image(self):
-        return uint8(np.zeros((self.display_inch_height*self.display_dpi,
-                               self.display_inch_width*self.display_dpi,
+        return uint8(np.zeros((self.display_pixel_height,
+                               self.display_pixel_width,
                                3)))
 
     def start(self):
@@ -160,7 +160,7 @@ class EEGDeviceReader(object):
 
             plt.style.use('seaborn')
             fig, axe = plt.subplots(1, 1, figsize=(
-                self.display_inch_width, self.display_inch_height), dpi=self.display_dpi)
+                self.display_pixel_width/self.display_dpi, self.display_pixel_height/self.display_dpi), dpi=self.display_dpi)
 
             current_package = fetched[-1][0] % packages
 
@@ -190,7 +190,7 @@ class EEGDeviceReader(object):
             axe.set_xlim(0, self.display_window_length)
 
             axe.set_title(
-                f'EEG (x64) {datetime.fromtimestamp(timestamp).today()}')
+                f'EEG x64 (Simulation) {self.get_data_buffer_size()} | {self.packages_limit}')
 
             fig.tight_layout()
 

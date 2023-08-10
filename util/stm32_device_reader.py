@@ -49,8 +49,8 @@ def decode_bytearray(bytearray):
 
     return dict(
         idx=a[0],
-        ecg=b[0],
-        esg=c[0],
+        eog=b[0],
+        emg=c[0],
         tem=d[0],
         timestamp=time.time()
     )
@@ -59,15 +59,15 @@ def decode_bytearray(bytearray):
 class Stm32DeviceReader(object):
     packages_limit = 5000  # number of packages
     display_window_length = 5  # seconds
-    display_inch_width = 4  # inches
-    display_inch_height = 4  # inches
+    display_pixel_width = 400  # pixels
+    display_pixel_height = 400  # pixels
     display_dpi = 100  # DPI
     sample_rate = 10  # Hz
     port = 'COM4'  # port name
     baudrate = 115200  # baudrate
     channels_colors = dict(  # channels and their colors
-        ecg='#a00000',
-        esg='#00a000',
+        eog='#a00000',
+        emg='#00a000',
         tem='#0000a0'
     )
 
@@ -93,8 +93,8 @@ class Stm32DeviceReader(object):
             LOGGER.error('Can not start, since it is already running')
 
     def placeholder_image(self):
-        return uint8(np.zeros((self.display_inch_height*self.display_dpi,
-                               self.display_inch_width*self.display_dpi,
+        return uint8(np.zeros((self.display_pixel_height,
+                               self.display_pixel_width,
                                3)))
 
     def stop(self):
@@ -141,7 +141,7 @@ class Stm32DeviceReader(object):
             timestamp = fetched[-1]['timestamp']
 
             fig, axe = plt.subplots(1, 1, figsize=(
-                self.display_inch_width, self.display_inch_height), dpi=self.display_dpi)
+                self.display_pixel_width/self.display_dpi, self.display_pixel_height/self.display_dpi), dpi=self.display_dpi)
 
             latest_package_idx = fetched[-1]['idx'] % packages
 
@@ -174,7 +174,8 @@ class Stm32DeviceReader(object):
             # Setup axe
             axe.set_xlim(0, self.display_window_length)
 
-            axe.set_title(f'Stm32 {datetime.fromtimestamp(timestamp).today()}')
+            axe.set_title(
+                f'Stm32 ({self.port}) {self.get_data_buffer_size()} | {self.packages_limit}')
 
             # Convert the bgr into the opencv-image
             fig.tight_layout()

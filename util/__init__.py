@@ -41,8 +41,8 @@ eeg_config = dict(
     package_length=100,  # number of time points per package
     packages_limit=5000,  # number of packages
     display_window_length=5,  # seconds
-    display_inch_width=4,  # inch
-    display_inch_height=5,  # inch
+    display_pixel_width=400,  # pixels
+    display_pixel_height=500,  # pixels
     display_dpi=100,  # DPI
     not_exist='Not exist option',
 )
@@ -51,14 +51,14 @@ stm32_config = dict(
     packages_limit=5000,  # number of packages
     sample_rate=10,  # Hz
     display_window_length=5,  # seconds
-    display_inch_width=4,  # inch
-    display_inch_height=4,  # inch
+    display_pixel_width=400,  # pixels
+    display_pixel_height=400,  # pixels
     display_dpi=100,  # DPI
     port='COM5',  # port name
     baudrate=115200,  # baudrate
     channels_colors=dict(  # channels and their colors
-        ecg='#a00000',
-        esg='#00a000',
+        eog='#a00000',
+        emg='#00a000',
         tem='#0000a0'
     )
 )
@@ -66,8 +66,8 @@ stm32_config = dict(
 decoder_config = dict(
     eeg_data_length=1000,  # milliseconds
     stm32_data_length=1000,  # milliseconds
-    display_inch_width=4,  # inch
-    display_inch_height=2,  # inch
+    display_pixel_width=400,  # pixels
+    display_pixel_height=200,  # pixels
     display_dpi=100,  # DPI
 )
 

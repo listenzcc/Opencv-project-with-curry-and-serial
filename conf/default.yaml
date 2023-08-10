@@ -19,16 +19,16 @@ eeg:
   package_length: 100
   packages_limit: 5000
   display_window_length: 5
-  display_inch_width: 4
-  display_inch_height: 5
+  display_pixel_width: 400
+  display_pixel_height: 500
   display_dpi: 100
   not_exist: Not exist option
 stm32:
   packages_limit: 5000
   sample_rate: 10
   display_window_length: 5
-  display_inch_width: 4
-  display_inch_height: 4
+  display_pixel_width: 400
+  display_pixel_height: 400
   display_dpi: 100
   port: COM5
   baudrate: 115200
@@ -60,6 +60,6 @@ osd:
 decoder:
   eeg_data_length: 1000
   stm32_data_length: 1000
-  display_inch_width: 4
-  display_inch_height: 2
+  display_pixel_width: 400
+  display_pixel_height: 200
   display_dpi: 100

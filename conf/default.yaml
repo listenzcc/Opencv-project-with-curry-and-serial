@@ -14,7 +14,7 @@ log_path: !!python/object/apply:pathlib.WindowsPath
 - log
 - '{time}.log'
 eeg:
-  channels: 64
+  channels: 69
   sample_rate: 1000
   package_length: 100
   packages_limit: 5000
@@ -30,11 +30,11 @@ stm32:
   display_pixel_width: 400
   display_pixel_height: 400
   display_dpi: 100
-  port: COM5
+  port: COM6
   baudrate: 115200
   channels_colors:
-    ecg: '#a00000'
-    esg: '#00a000'
+    eog: '#a00000'
+    emg: '#00a000'
     tem: '#0000a0'
 video:
   video_capture_idx: 0

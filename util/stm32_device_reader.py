@@ -224,7 +224,7 @@ class Stm32DeviceReader(object):
         if n < length:
             LOGGER.warning(f'Can not peek data with {length} samples.')
 
-        return list(self.data_buffer[-length:])
+        return list(self.data_buffer[-length:].copy())
 
     def peek_latest_data_by_milliseconds(self, milliseconds=1000):
         """Peek the latest data available for given milliseconds.

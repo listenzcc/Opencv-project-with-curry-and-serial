@@ -18,11 +18,14 @@ Functions:
 
 # %% ---- 2023-08-09 ------------------------
 # Requirements and constants
+import cv2
 import time
+import threading
 import numpy as np
 
 from . import LOGGER, CONF
 from .toolbox import uint8, put_text
+from .predict_model.Predict import predict
 
 
 # %% ---- 2023-08-09 ------------------------
@@ -56,9 +59,44 @@ class ComprehensiveDecoder(object):
 
         LOGGER.debug('Override the options with CONF')
 
-    def predict(self, stm32_data, eeg_data):
-        output = f'Shape: {stm32_data.shape}, {np.mean(stm32_data):.4f} |  {eeg_data.shape}, {np.mean(eeg_data):.4f}'
+    def predict(self, stm32_data, eeg_data, face_img_in_bgr):
+        threading.Thread(target=self._predict, args=(
+            stm32_data, eeg_data, face_img_in_bgr), daemon=True).start()
+
+    def _predict(self, stm32_data, eeg_data, face_img_in_bgr):
+        """Predict the status based on the input.
+
+        Args:
+            stm32_data (np.array): 3 x n array, n is the samples, 3 refers eog, emg and temperature channels;
+            eeg_data (np.array): chs x n array, chs is the number of eeg channels, n is the samples;
+            face_img_in_bgr (np.array): height x width x 3, the image from the camera.
+
+        Returns:
+            prediction value
+        """
+
+        # ---------------------
+        # Make the stm32_data 1000 points length
+        stm32_data = np.concatenate([stm32_data for _ in range(100)], axis=1)
+        face_img_in_bgr = cv2.resize(face_img_in_bgr, (2048, 1088))
+        face_img_in_bgr = cv2.cvtColor(face_img_in_bgr, cv2.COLOR_BGR2RGB)
+
+        if stm32_data.shape[1] != 1000:
+            return
+
+        if eeg_data.shape[1] != 1000:
+            return
+
+        print(stm32_data.shape, eeg_data.shape, face_img_in_bgr.shape)
+
+        tic = time.time()
+        res = predict(stm32_data, eeg_data, face_img_in_bgr)
+        time_cost = time.time() - tic
+
+        output = f'Predict value: {res}, Cost: {time_cost:.2f} seconds.'
+        print(output)
         self.draw(output)
+
         return output
 
     def draw(self, res):

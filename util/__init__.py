@@ -36,7 +36,7 @@ root = Path(__file__).parent.parent
 # %% ---- 2023-07-24 ------------------------
 # Pending
 eeg_config = dict(
-    channels=64,  # number of channels
+    channels=69,  # number of channels
     sample_rate=1000,  # Hz
     package_length=100,  # number of time points per package
     packages_limit=5000,  # number of packages
@@ -54,7 +54,7 @@ stm32_config = dict(
     display_pixel_width=400,  # pixels
     display_pixel_height=400,  # pixels
     display_dpi=100,  # DPI
-    port='COM5',  # port name
+    port='COM6',  # port name
     baudrate=115200,  # baudrate
     channels_colors=dict(  # channels and their colors
         eog='#a00000',

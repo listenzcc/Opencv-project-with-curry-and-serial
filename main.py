@@ -108,7 +108,7 @@ main_window = MainWindow()
 # %%
 
 
-def set_time_interval_job(secs=1):
+def set_time_interval_job(secs=0):
     time.sleep(secs)
 
     stm32_data = stm32_device_reader.peek_latest_data_by_milliseconds(
@@ -121,14 +121,22 @@ def set_time_interval_job(secs=1):
     if eeg_data is not None:
         print(f'eeg_data: {eeg_data.shape}')
 
-    if not any([stm32_data is None, eeg_data is None]):
-        # Decode
-        res = comprehensive_decoder.predict(stm32_data, eeg_data)
+    video_image = video_capture_reader.read()
 
-    set_time_interval_job(secs)
+    return (
+        None if any([stm32_data is None, eeg_data is None]) else comprehensive_decoder._predict(
+            stm32_data, eeg_data, video_image)
+    )
 
 
-threading.Thread(target=set_time_interval_job, args=(1, ), daemon=True).start()
+def loop_prediction(secs=1):
+    while True:
+        # time.sleep(secs)
+        set_time_interval_job()
+
+
+# threading.Thread(target=set_time_interval_job, args=(1, ), daemon=True).start()
+threading.Thread(target=loop_prediction, args=(1, ), daemon=True).start()
 
 # %%
 running_option.start()

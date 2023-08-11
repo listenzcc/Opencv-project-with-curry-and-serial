@@ -53,8 +53,7 @@ class Curry8EEGReceiver(object):
         # package 是要发送的数据包
         self.package = None
 
-        LOGGER.debug('Initialize {} with {}'.format(
-            self.__class__, self.__dict__))
+        LOGGER.debug(f'Initialize {self.__class__} with {self.__dict__}')
 
         self.buffer = []
         self.connect()
@@ -63,23 +62,20 @@ class Curry8EEGReceiver(object):
     def connect(self):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.connect((self.host, self.port))
-        LOGGER.debug('Connect to {}:{}'.format(self.host, self.port))
+        LOGGER.debug(f'Connect to {self.host}:{self.port}')
 
     def disconnect(self):
         self.sock.shutdown(socket.SHUT_RDWR)
         self.sock.close()
-        LOGGER.debug('Disconnect with {}:{}'.format(self.host, self.port))
+        LOGGER.debug(f'Disconnect with {self.host}:{self.port}')
 
     def read_forever(self):
         self.running = True
         Thread(target=self._collect_packages, daemon=True).start()
         LOGGER.debug('Start collecting thread.')
-        pass
 
     def get(self):
-        if len(self.buffer) == 0:
-            return None
-        return self.buffer.pop(0)
+        return None if len(self.buffer) == 0 else self.buffer.pop(0)
 
     def _collect_packages(self):
         LOGGER.debug('Collecting packages')
@@ -93,7 +89,7 @@ class Curry8EEGReceiver(object):
 
         while self.running:
             if not self.sock:
-                LOGGER.error('Cannot connect from {}'.format(self.sock))
+                LOGGER.error(f'Cannot connect from {self.sock}')
                 break
 
             # 这只是一个指令
@@ -164,14 +160,12 @@ class Curry8EEGReceiver(object):
         startSample = np.flip(head[8:12]).copy().view(np.uint32)
         packetSize = np.flip(head[12:16]).copy().view(np.uint32)
 
-        message = {
+        return {
             'code': code,
             'request': request,
             'startSample': startSample[0],
-            'packetSize': packetSize[0]
+            'packetSize': packetSize[0],
         }
-
-        return message
 
     def requestInfo(self):
         # 获得设置信息
@@ -182,7 +176,7 @@ class Curry8EEGReceiver(object):
 
         message, data = self.read_from_sock()
 
-        size = np.uint8(data[0:4]).copy().view(dtype=np.uint32)
+        size = np.uint8(data[:4]).copy().view(dtype=np.uint32)
         eegChan = np.uint8(data[4:8]).copy().view(np.uint32)
         sampleRate = np.uint8(data[8:12]).copy().view(np.uint32)
         datasize = np.uint8(data[12:16]).copy().view(np.uint32)
@@ -195,7 +189,7 @@ class Curry8EEGReceiver(object):
         }
 
         self.info = info
-        LOGGER.debug('Request info: {}'.format(info))
+        LOGGER.debug(f'Request info: {info}')
         return self
 
     def requestChannelInfo(self):
@@ -241,10 +235,10 @@ class Curry8EEGReceiver(object):
 
         self.info['channels'] = channelLabels
 
-        channelLabels = [' %s' % label for label in channelLabels]
+        channelLabels = [f' {label}' for label in channelLabels]
         channelLabels = ''.join(channelLabels)
-        LOGGER.debug('Send Data from: %s' % channelLabels)
-        LOGGER.debug('Update info: {}'.format(self.info))
+        LOGGER.debug(f'Send Data from: {channelLabels}')
+        LOGGER.debug(f'Update info: {self.info}')
 
         return self
 
@@ -272,14 +266,12 @@ class EEGDeviceReader(object):
         self.conf_override()
         self.running = False
 
-        LOGGER.debug(
-            'Initialize {} with {}'.format(self.__class__, self.__dict__))
-        pass
+        LOGGER.debug(f'Initialize {self.__class__} with {self.__dict__}')
 
     def conf_override(self):
         for key, value in CONF['eeg'].items():
             if not (hasattr(self, key)):
-                LOGGER.warning('Invalid key: {} in CONF'.format(key))
+                LOGGER.warning(f'Invalid key: {key} in CONF')
                 continue
             setattr(self, key, value)
 
@@ -347,10 +339,10 @@ class EEGDeviceReader(object):
 
             if self.get_data_buffer_size() > self.packages_limit:
                 LOGGER.warning(
-                    'Data buffer exceeds {} packages.'.format(self.packages_limit))
+                    f'Data buffer exceeds {self.packages_limit} packages.')
                 self.data_buffer.pop(0)
 
-            # time.sleep(self.package_interval / 10)
+                # time.sleep(self.package_interval / 10)
 
         LOGGER.debug('Read data loop stops.')
 
@@ -366,7 +358,7 @@ class EEGDeviceReader(object):
         """
         for j, d in enumerate(data):
             d -= np.min(d)
-            if not np.max(d) == 0:
+            if np.max(d) != 0:
                 d /= np.max(d)
             d += j
         return data
@@ -393,7 +385,6 @@ class EEGDeviceReader(object):
         LOGGER.debug('Plot data starts.')
 
         while self.running:
-
             fetched = self.peek_latest_data_by_length(packages)
             if fetched is None:
                 continue
@@ -405,10 +396,9 @@ class EEGDeviceReader(object):
 
             current_package = fetched[-1][0] % packages
 
-            # Draw the left part of the signal
-            select = [e[2] for e in fetched
-                      if (e[0] % packages) < current_package]
-            if len(select) > 0:
+            if select := [
+                e[2] for e in fetched if (e[0] % packages) < current_package
+            ]:
                 d = np.concatenate(select, axis=1)
                 self.add_offset(d)
 
@@ -417,10 +407,9 @@ class EEGDeviceReader(object):
 
                 axe.plot(t, d.transpose())
 
-            # Draw the right part of the signal
-            select = [e[2] for e in fetched
-                      if (e[0] % packages) > current_package]
-            if len(select) > 0:
+            if select := [
+                e[2] for e in fetched if (e[0] % packages) > current_package
+            ]:
                 d = np.concatenate(select, axis=1)
                 self.add_offset(d)
 
@@ -462,12 +451,40 @@ class EEGDeviceReader(object):
             list: The data being fetched. The elements of the list are (idx, timestamp, data of (self.channels x self.package_length)).
             None if there is no data available.
         """
-        if self.get_data_buffer_size() < 1:
+
+        n = self.get_data_buffer_size()
+
+        if n < 1:
+            LOGGER.error('The data buffer is empty')
             return None
 
-        output = [e for e in self.data_buffer[-length:]]
+        if n < length:
+            LOGGER.warning(f'Can not peek data with {length} samples.')
 
-        return output
+        return list(self.data_buffer[-length:].copy())
+
+    def peek_latest_data_by_milliseconds(self, milliseconds=1000):
+        """Peek the latest data available for given milliseconds.
+
+        Args:
+            milliseconds (int, optional): The milliseconds being required. Defaults to 1000.
+
+        Returns:
+            np.array: The (64 x n) array, the n refers the samples and the 3 refers the channels, the order is given in self.channels_colors.
+        """
+        num_packages = int(milliseconds / 1000 *
+                           self.sample_rate / self.package_length) + 1
+
+        n = int(milliseconds / 1000 * self.sample_rate)
+
+        packages = self.peek_latest_data_by_length(num_packages)
+
+        if packages is None:
+            LOGGER.error(
+                f'Failed peek_latest_data_by_length with {milliseconds}')
+            return None
+
+        return np.concatenate([e[2] for e in packages], axis=1)[:, -n:]
 
     def run_forever(self):
         """Run the loops forever.
@@ -476,7 +493,6 @@ class EEGDeviceReader(object):
         Thread(target=self._read_data, daemon=True).start()
         Thread(target=self._plot_data, daemon=True).start()
         Thread(target=self.connect, daemon=True).start()
-        pass
 
 
 # %% ---- 2023-07-24 ------------------------

@@ -42,15 +42,12 @@ class VideoCaptureReader(object):
         self.vid = None
         self.connect()
 
-        LOGGER.debug(
-            'Initialize {} with {}'.format(self.__class__, self.__dict__))
-        pass
+        LOGGER.debug(f'Initialize {self.__class__} with {self.__dict__}')
 
     def conf_override(self):
         for key, value in CONF['video'].items():
             if not (hasattr(self, key)):
-                LOGGER.warning('Invalid key: {} in CONF'.format(key))
-                continue
+                LOGGER.warning(f'Invalid key: {key} in CONF')
             setattr(self, key, value)
 
         LOGGER.debug('Override the options with CONF')
@@ -64,7 +61,7 @@ class VideoCaptureReader(object):
         success_flag, bgr = self.vid.read()
 
         if not success_flag:
-            LOGGER.error('Receives frame fails')
+            # LOGGER.error('Receives frame fails')
             bgr = uint8(np.random.randint(
                 50, 200, (self.display_height, self.display_width, 3)))
             bgr[:40] = 0

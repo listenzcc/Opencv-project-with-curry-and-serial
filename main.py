@@ -20,6 +20,8 @@ Functions:
 # Requirements and constants
 
 import threading
+import multiprocessing
+
 import cv2
 import time
 import keyboard
@@ -123,84 +125,94 @@ def set_time_interval_job(secs=0):
 
     video_image = video_capture_reader.read()
 
-    return (
-        None if any([stm32_data is None, eeg_data is None]) else comprehensive_decoder._predict(
-            stm32_data, eeg_data, video_image)
-    )
+    if not any([stm32_data is None, eeg_data is None]):
+        comprehensive_decoder.predict(stm32_data,
+                                      eeg_data,
+                                      video_image)
+
+    return
 
 
 def loop_prediction(secs=1):
     while True:
-        # time.sleep(secs)
+        time.sleep(secs)
         set_time_interval_job()
+        # multiprocessing.Process(
+        #     target=set_time_interval_job, daemon=True).start()
 
 
-# threading.Thread(target=set_time_interval_job, args=(1, ), daemon=True).start()
 threading.Thread(target=loop_prediction, args=(1, ), daemon=True).start()
 
-# %%
+# ----------------------------------
 running_option.start()
 keyboard.on_press(keypress_callback, suppress=True)
 
-tic = time.time()
-toc_limit = tic + 100  # Seconds
+# %%
+if __name__ == '__main__':
+    # multiprocessing.freeze_support()
+    # multiprocessing.Process(target=loop_prediction,
+    #                         args=(1, ), daemon=True).start()
 
-eeg_image = eeg_device_reader.placeholder_image()
-stm32_image = stm32_device_reader.placeholder_image()
-
-
-while running_option.running:
-    video_image = video_capture_reader.read()
-
-    pair = eeg_device_reader.read_bgr()
-    eeg_image_refresh_flag = pair is not None
-    if eeg_image_refresh_flag:
-        eeg_timestamp, eeg_image = pair
-
-    pair = stm32_device_reader.read_bgr()
-    stm32_image_refresh_flag = pair is not None
-    if stm32_image_refresh_flag:
-        stm32_timestamp, stm32_image = pair
-
-    toc = time.time()
-    delay = toc - tic
-
-    # ----------------------------------------------------------------
-    if eeg_image_refresh_flag:
-        text = '{:06.2f}'.format(toc - eeg_timestamp)
-        put_text(eeg_image, text, org=CONF['osd']['org'])
-        main_window.overlay_eeg_panel(eeg_image)
-
-    # ----------------------------------------------------------------
-    if stm32_image_refresh_flag:
-        text = '{:06.2f}'.format(toc - stm32_timestamp)
-        put_text(stm32_image, text, org=CONF['osd']['org'])
-        main_window.overlay_stm32_panel(stm32_image)
-
-    # ----------------------------------------------------------------
-    text = '{:04d} | {:06.2f} Fps'.format(
-        timestamp2milliseconds(delay), delay2fps(delay))
-    put_text(video_image, text, org=CONF['osd']['org'])
-    main_window.overlay_video_panel(video_image)
-
-    # ----------------------------------------------------------------
-    main_window.overlay_decoder_panel(comprehensive_decoder.bgr)
-
-    cv2.imshow(project_name, main_window.screen_bgr)
-    cv2.setWindowTitle(project_name, f'{project_name} - {tic}')
-    cv2.pollKey()
+    # ----------------------------------
 
     tic = time.time()
+    toc_limit = tic + 100  # Seconds
 
-    if toc > toc_limit:
-        print('Time exceeds the limit, stop it.')
-        running_option.stop()
+    eeg_image = eeg_device_reader.placeholder_image()
+    stm32_image = stm32_device_reader.placeholder_image()
 
-eeg_device_reader.stop()
+    while running_option.running:
+        video_image = video_capture_reader.read()
 
-keyboard.unhook_all()
-print('Press any keyboard to continue..., or wait for 1 seconds')
-cv2.waitKey(1 * 1000)
+        pair = eeg_device_reader.read_bgr()
+        eeg_image_refresh_flag = pair is not None
+        if eeg_image_refresh_flag:
+            eeg_timestamp, eeg_image = pair
+
+        pair = stm32_device_reader.read_bgr()
+        stm32_image_refresh_flag = pair is not None
+        if stm32_image_refresh_flag:
+            stm32_timestamp, stm32_image = pair
+
+        toc = time.time()
+        delay = toc - tic
+
+        # ----------------------------------------------------------------
+        if eeg_image_refresh_flag:
+            text = '{:06.2f}'.format(toc - eeg_timestamp)
+            put_text(eeg_image, text, org=CONF['osd']['org'])
+            main_window.overlay_eeg_panel(eeg_image)
+
+        # ----------------------------------------------------------------
+        if stm32_image_refresh_flag:
+            text = '{:06.2f}'.format(toc - stm32_timestamp)
+            put_text(stm32_image, text, org=CONF['osd']['org'])
+            main_window.overlay_stm32_panel(stm32_image)
+
+        # ----------------------------------------------------------------
+        text = '{:04d} | {:06.2f} Fps'.format(
+            timestamp2milliseconds(delay), delay2fps(delay))
+        put_text(video_image, text, org=CONF['osd']['org'])
+        main_window.overlay_video_panel(video_image)
+
+        # ----------------------------------------------------------------
+        main_window.overlay_decoder_panel(comprehensive_decoder.bgr)
+
+        cv2.imshow(project_name, main_window.screen_bgr)
+        cv2.setWindowTitle(project_name, f'{project_name} - {tic}')
+        cv2.pollKey()
+
+        tic = time.time()
+
+        if toc > toc_limit:
+            print('Time exceeds the limit, stop it.')
+            running_option.stop()
+
+    eeg_device_reader.stop()
+
+    keyboard.unhook_all()
+    print('Press any keyboard to continue..., or wait for 1 seconds')
+    cv2.waitKey(1 * 1000)
 
 # %% ---- 2023-07-20 ------------------------
 # Pending

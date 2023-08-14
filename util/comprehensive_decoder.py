@@ -18,10 +18,17 @@ Functions:
 
 # %% ---- 2023-08-09 ------------------------
 # Requirements and constants
+import io
 import cv2
 import time
-import threading
+
+import asyncio
+from websockets.sync.client import connect
+
 import numpy as np
+
+
+import multiprocessing
 
 from . import LOGGER, CONF
 from .toolbox import uint8, put_text
@@ -59,11 +66,24 @@ class ComprehensiveDecoder(object):
 
         LOGGER.debug('Override the options with CONF')
 
-    def predict(self, stm32_data, eeg_data, face_img_in_bgr):
-        threading.Thread(target=self._predict, args=(
-            stm32_data, eeg_data, face_img_in_bgr), daemon=True).start()
+    # def predict_computation(self, stm32_data, eeg_data, face_img_in_bgr):
+    #     # ---------------------
+    #     # Make the stm32_data 1000 points length
+    #     stm32_data = np.concatenate([stm32_data for _ in range(100)], axis=1)
+    #     face_img_in_bgr = cv2.resize(face_img_in_bgr, (2048, 1088))
+    #     face_img_in_bgr = cv2.cvtColor(face_img_in_bgr, cv2.COLOR_BGR2RGB)
 
-    def _predict(self, stm32_data, eeg_data, face_img_in_bgr):
+    #     if stm32_data.shape[1] != 1000:
+    #         return -1
+
+    #     if eeg_data.shape[1] != 1000:
+    #         return -1
+
+    #     print(stm32_data.shape, eeg_data.shape, face_img_in_bgr.shape)
+
+    #     return predict(stm32_data, eeg_data, face_img_in_bgr)
+
+    def predict(self, stm32_data, eeg_data, face_img_in_bgr):
         """Predict the status based on the input.
 
         Args:
@@ -75,22 +95,52 @@ class ComprehensiveDecoder(object):
             prediction value
         """
 
-        # ---------------------
-        # Make the stm32_data 1000 points length
-        stm32_data = np.concatenate([stm32_data for _ in range(100)], axis=1)
-        face_img_in_bgr = cv2.resize(face_img_in_bgr, (2048, 1088))
-        face_img_in_bgr = cv2.cvtColor(face_img_in_bgr, cv2.COLOR_BGR2RGB)
-
-        if stm32_data.shape[1] != 1000:
-            return
-
-        if eeg_data.shape[1] != 1000:
-            return
-
-        print(stm32_data.shape, eeg_data.shape, face_img_in_bgr.shape)
-
         tic = time.time()
-        res = predict(stm32_data, eeg_data, face_img_in_bgr)
+
+        res = 0
+        # res = self.predict_computation(stm32_data, eeg_data, face_img_in_bgr)
+
+        # async def foo():
+        #     with websockets.connect('ws://localhost:8765/') as ws:
+        #         io_send = io.BytesIO()
+        #         np.save(io_send, eeg_data)
+        #         np.save(io_send, stm32_data)
+        #         np.save(io_send, face_img_in_bgr)
+        #         byte_array = io_send.getvalue()
+        #         print(len(byte_array))
+
+        #         await ws.send(byte_array)
+
+        #         response = await ws.recv()
+        #         print(response)
+
+        def hello():
+            with connect("ws://localhost:8765") as ws:
+
+                io_send = io.BytesIO()
+                np.save(io_send, eeg_data)
+                np.save(io_send, stm32_data)
+                np.save(io_send, face_img_in_bgr)
+                byte_array = io_send.getvalue()
+                print(len(byte_array))
+
+                # ws.send("Hello world!")
+                ws.send(byte_array)
+
+                message = ws.recv()
+                print(f"Received: {message}")
+
+                return message
+
+        res = hello()
+
+        # asyncio.get_event_loop.run_until_complete(foo())
+        # asyncio.run(foo())
+
+        # target = self.predict_computation
+        # args = (stm32_data, eeg_data, face_img_in_bgr)
+        # multiprocessing.Process(target=target, args=args, daemon=True).start()
+
         time_cost = time.time() - tic
 
         output = f'Predict value: {res}, Cost: {time_cost:.2f} seconds.'

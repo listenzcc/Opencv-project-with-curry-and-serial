@@ -19,20 +19,15 @@ Functions:
 # %% ---- 2023-08-09 ------------------------
 # Requirements and constants
 import io
-import cv2
 import time
 
-import asyncio
 from websockets.sync.client import connect
 
 import numpy as np
 
-
-import multiprocessing
-
 from . import LOGGER, CONF
 from .toolbox import uint8, put_text
-from .predict_model.Predict import predict
+# from .predict_model.Predict import predict
 
 
 # %% ---- 2023-08-09 ------------------------
@@ -91,31 +86,24 @@ class ComprehensiveDecoder(object):
             eeg_data (np.array): chs x n array, chs is the number of eeg channels, n is the samples;
             face_img_in_bgr (np.array): height x width x 3, the image from the camera.
 
+        Res table:
+            Numbers no-less than 0, refers the decoding result is correct;
+            -100 refers can not connect to the decoding backend;
+            -1 refers the stm32_data shape is incorrect;
+            -2 refers the eeg_data shape is incorrect;
+            other string refers the runtime error of the predict function.
+
         Returns:
             prediction value
         """
 
         tic = time.time()
 
-        res = 0
+        res = -100
         # res = self.predict_computation(stm32_data, eeg_data, face_img_in_bgr)
 
-        # async def foo():
-        #     with websockets.connect('ws://localhost:8765/') as ws:
-        #         io_send = io.BytesIO()
-        #         np.save(io_send, eeg_data)
-        #         np.save(io_send, stm32_data)
-        #         np.save(io_send, face_img_in_bgr)
-        #         byte_array = io_send.getvalue()
-        #         print(len(byte_array))
-
-        #         await ws.send(byte_array)
-
-        #         response = await ws.recv()
-        #         print(response)
-
         def hello():
-            with connect("ws://localhost:8765") as ws:
+            with connect("ws://localhost:8765", close_timeout=1) as ws:
 
                 io_send = io.BytesIO()
                 np.save(io_send, eeg_data)
@@ -132,14 +120,10 @@ class ComprehensiveDecoder(object):
 
                 return message
 
-        res = hello()
-
-        # asyncio.get_event_loop.run_until_complete(foo())
-        # asyncio.run(foo())
-
-        # target = self.predict_computation
-        # args = (stm32_data, eeg_data, face_img_in_bgr)
-        # multiprocessing.Process(target=target, args=args, daemon=True).start()
+        try:
+            res = hello()
+        except Exception as err:
+            LOGGER.error(f"Failed to request decoded message: {err}")
 
         time_cost = time.time() - tic
 

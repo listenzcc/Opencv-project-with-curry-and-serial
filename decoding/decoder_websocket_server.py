@@ -24,6 +24,8 @@ import time
 import asyncio
 import numpy as np
 
+from loguru import logger as LOGGER
+
 from websockets.server import serve
 
 from predict_model.Predict import predict
@@ -70,29 +72,30 @@ async def echo(websocket):
         if eeg_data.shape[1] != 1000:
             return -2
 
-        print(
+        LOGGER.debug(
             f'Data for decoding: {stm32_data.shape}, {eeg_data.shape}, {face_img_in_bgr.shape}')
 
         try:
             message = predict(stm32_data, eeg_data, face_img_in_bgr)
         except Exception as err:
             message = err
-            print(f'Decoding failed: {err}')
+            LOGGER.error(f'Decoding failed: {err}')
 
         await websocket.send(f'{message}')
 
 
 async def serve_forever():
     async with serve(echo, "localhost", 8765):
-        print('Serving forever ...')
+        LOGGER.debug('Serving forever ...')
         await asyncio.Future()  # run forever
+
+    LOGGER.debug('Serving stops.')
 
 
 # %% ---- 2023-08-14 ------------------------
 # Play ground
 
 if __name__ == '__main__':
-    time.sleep(100)
     asyncio.run(serve_forever())
 
 # %% ---- 2023-08-14 ------------------------

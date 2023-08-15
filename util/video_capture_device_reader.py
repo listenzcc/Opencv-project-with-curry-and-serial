@@ -67,6 +67,17 @@ class VideoCaptureReader(object):
             bgr[:40] = 0
             return bgr
 
+        bgr_raw = bgr.copy()
+
+        bgr[:, :, 0] = 0
+        # markers = bgr_raw
+        # markers = cv2.watershed(bgr, markers)
+
+        bgr[:, :, 1] = cv2.Canny(bgr, 100, 50)
+        bgr[:, :, 2] = cv2.Canny(bgr, 50, 100)
+
+        # bgr = cv2.cvtColor(cv2.Canny(bgr, 50, 100), cv2.COLOR_GRAY2BGR)
+
         return cv2.resize(bgr, (self.display_width, self.display_height))
 
 

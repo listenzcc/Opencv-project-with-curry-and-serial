@@ -19,15 +19,16 @@ Functions:
 # %% ---- 2023-07-20 ------------------------
 # Requirements and constants
 
-import threading
-import multiprocessing
-
 import cv2
 import time
+import joblib
 import keyboard
+import threading
+
 import numpy as np
 
 from rich import print
+from pathlib import Path
 
 # from util.eeg_device_reader import EEGDeviceReader
 from util.eeg_device_reader_simulation import EEGDeviceReader
@@ -100,7 +101,7 @@ video_capture_reader = VideoCaptureReader()
 eeg_device_reader = EEGDeviceReader()
 eeg_device_reader.start()
 
-stm32_device_reader = Stm32DeviceReader()
+stm32_device_reader = Stm32DeviceReader(video_capture_reader)
 stm32_device_reader.start()
 
 comprehensive_decoder = ComprehensiveDecoder()
@@ -211,6 +212,26 @@ if __name__ == '__main__':
     eeg_device_reader.stop()
 
     keyboard.unhook_all()
+
+    # ----------------------------------------------------------------
+    # Save data
+
+    LOGGER.debug('Start saving...')
+    experiment_data_path = Path(f'experiment-data/{time.time()}.python')
+    experiment_data_path.parent.mkdir(exist_ok=True, parents=True)
+
+    eeg_data = eeg_device_reader.peek_latest_data_by_length(length=10000)
+    stm32_data = stm32_device_reader.peek_latest_data_by_length(length=10000)
+
+    saved_data = dict(
+        eeg_data=eeg_data,
+        stm32_data=stm32_data,
+    )
+
+    joblib.dump(saved_data, experiment_data_path, compress=3)
+
+    LOGGER.debug(f'Saved experiment data into {experiment_data_path}')
+
     print('Press any keyboard to continue..., or wait for 1 seconds')
     cv2.waitKey(1 * 1000)
 

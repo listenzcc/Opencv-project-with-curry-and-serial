@@ -19,6 +19,7 @@ Functions:
 # %% ---- 2023-08-08 ------------------------
 # Requirements and constants
 import time
+import random
 import struct
 import serial
 
@@ -49,9 +50,19 @@ def decode_bytearray(bytearray):
 
     return dict(
         idx=a[0],
-        eog=b[0],
-        emg=c[0],
-        tem=d[0],
+        ecg=b[0],
+        eda=c[0],
+        skt=d[0],
+        timestamp=time.time()
+    )
+
+
+def random_package(idx=-1):
+    return dict(
+        idx=idx,
+        ecg=random.random() * 2 - 1,  # -1 ~ +8
+        eda=random.random() * 9 - 1,  # -1 ~ +1
+        skt=random.random() * 11 + 26,  # 26 ~ 35
         timestamp=time.time()
     )
 
@@ -66,14 +77,16 @@ class Stm32DeviceReader(object):
     port = 'COM4'  # port name
     baudrate = 115200  # baudrate
     channels_colors = dict(  # channels and their colors
-        eog='#a00000',
-        emg='#00a000',
-        tem='#0000a0'
+        ecg='#a00000',
+        eda='#00a000',
+        skt='#0000a0'
     )
 
-    def __init__(self):
+    def __init__(self, video_capture_reader=None):
         self.conf_override()
         self.running = False
+        self.simulation_flag = False
+        self.video_capture_reader = video_capture_reader
 
         LOGGER.debug(f'Initialize {self.__class__} with {self.__dict__}')
 
@@ -107,9 +120,16 @@ class Stm32DeviceReader(object):
 
         try:
             with serial.Serial(self.port, self.baudrate) as ser:
+                # Not a simulation for the stm32 device,
+                # since I can read from the device
+                self.simulation_flag = False
                 while self.running:
                     incoming = ser.read(21)
                     package = decode_bytearray(incoming)
+
+                    if self.video_capture_reader is not None:
+                        package['video_bgr'] = self.video_capture_reader.read()
+
                     self.data_buffer.append(package)
 
                 if self.get_data_buffer_size() > self.packages_limit:
@@ -119,6 +139,25 @@ class Stm32DeviceReader(object):
 
         except Exception as err:
             LOGGER.error(f"Serial reading failed, {err}")
+
+            # Start simulation for the stm32 device
+            LOGGER.warning('STM32 system is running on simulation mode')
+            self.simulation_flag = True
+            self.idx = 0
+            while self.running:
+                time.sleep(1/self.sample_rate)
+                package = random_package(self.idx)
+
+                if self.video_capture_reader is not None:
+                    package['video_bgr'] = self.video_capture_reader.read()
+
+                self.data_buffer.append(package)
+                self.idx += 1
+
+                if self.get_data_buffer_size() > self.packages_limit:
+                    LOGGER.warning(
+                        f'Data buffer exceeds {self.packages_limit} packages.')
+                    self.data_buffer.pop(0)
 
         LOGGER.debug('Read data loop stops.')
 
@@ -185,6 +224,10 @@ class Stm32DeviceReader(object):
             axe.set_title(
                 f'Stm32 ({self.port}) {self.get_data_buffer_size()} | {self.packages_limit}')
 
+            if self.simulation_flag:
+                axe.set_title(
+                    f'Stm32 (Simulation) {self.get_data_buffer_size()} | {self.packages_limit}')
+
             # Convert the bgr into the opencv-image
             fig.tight_layout()
             bgr = matplotlib_to_opencv_image(fig)
@@ -226,7 +269,7 @@ class Stm32DeviceReader(object):
         n = self.get_data_buffer_size()
 
         if n < 1:
-            LOGGER.error('The data buffer is empty')
+            # LOGGER.error('The data buffer is empty')
             return None
 
         if n < length:

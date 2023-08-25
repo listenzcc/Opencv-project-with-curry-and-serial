@@ -57,9 +57,9 @@ stm32_config = dict(
     port='COM6',  # port name
     baudrate=115200,  # baudrate
     channels_colors=dict(  # channels and their colors
-        eog='#a00000',
-        emg='#00a000',
-        tem='#0000a0'
+        ecg='#a00000',  # 心电
+        eda='#00a000',  # 皮电
+        skt='#0000a0'  # 体温
     )
 )
 

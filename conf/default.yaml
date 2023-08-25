@@ -33,9 +33,9 @@ stm32:
   port: COM6
   baudrate: 115200
   channels_colors:
-    eog: '#a00000'
-    emg: '#00a000'
-    tem: '#0000a0'
+    ecg: '#a00000'
+    eda: '#00a000'
+    skt: '#0000a0'
 video:
   video_capture_idx: 0
   display_width: 400

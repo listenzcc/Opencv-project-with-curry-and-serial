@@ -3,3 +3,4 @@ __pycache__
 *.log
 Model_train_2023_8_9
 predict_model
+experiment-data

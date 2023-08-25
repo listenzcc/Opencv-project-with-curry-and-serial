@@ -153,6 +153,10 @@ class Stm32DeviceReader(object):
                 t = np.linspace(0, n/self.sample_rate, n, endpoint=False)
                 for name, color in self.channels_colors.items():
                     array = [e[name] for e in select]
+
+                    # re scale array by name
+                    # array = array * k + b
+
                     axe.plot(t, array, label=name, color=color)
 
                 axe.legend()
@@ -166,6 +170,10 @@ class Stm32DeviceReader(object):
                                 self.display_window_length, m, endpoint=False)
                 for name, color in self.channels_colors.items():
                     array = [e[name] for e in select]
+
+                    # re scale array by name
+                    # array = array * k + b
+
                     axe.plot(t, array, linewidth=0.5, label=name, color=color)
 
                 if n == 0:
